@@ -1,9 +1,64 @@
-import React, { useState, useEffect } from 'react';
-import { HashRouter, Routes, Route, NavLink, useLocation } from 'react-router-dom';
+import React, { useEffect, useState, createContext, useContext } from 'react';
 import { DailyView } from './components/DailyView';
 import { WeeklyView } from './components/WeeklyView';
 import { QuarterlyView } from './components/QuarterlyView';
 import { PenLine, BarChart2, BookOpen } from 'lucide-react';
+
+// --- Minimal Hash Router Implementation ---
+const RouterContext = createContext<{ path: string }>({ path: '/' });
+
+const useLocation = () => {
+  const context = useContext(RouterContext);
+  return { pathname: context.path };
+};
+
+const HashRouter = ({ children }: { children: React.ReactNode }) => {
+  const [path, setPath] = useState(() => window.location.hash.slice(1) || '/');
+
+  useEffect(() => {
+    const handleHashChange = () => {
+      const current = window.location.hash.slice(1) || '/';
+      setPath(current);
+    };
+    window.addEventListener('hashchange', handleHashChange);
+    // Ensure we start with a hash if none exists
+    if (!window.location.hash) window.location.hash = '#/';
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
+  return (
+    <RouterContext.Provider value={{ path }}>
+      {children}
+    </RouterContext.Provider>
+  );
+};
+
+const Routes = ({ children }: { children: React.ReactNode }) => <>{children}</>;
+
+const Route = ({ path, element }: { path: string; element: React.ReactNode }) => {
+  const { path: currentPath } = useContext(RouterContext);
+  return currentPath === path ? <>{element}</> : null;
+};
+
+const NavLink = ({
+  to,
+  className,
+  children,
+}: {
+  to: string;
+  className: string | ((props: { isActive: boolean }) => string);
+  children: React.ReactNode;
+}) => {
+  const { path } = useContext(RouterContext);
+  const isActive = path === to;
+  const resolvedClassName = typeof className === 'function' ? className({ isActive }) : className;
+  return (
+    <a href={`#${to}`} className={resolvedClassName}>
+      {children}
+    </a>
+  );
+};
+// ------------------------------------------------------------------
 
 const NavItem = ({ to, icon: Icon, label }: { to: string; icon: any; label: string }) => (
   <NavLink
