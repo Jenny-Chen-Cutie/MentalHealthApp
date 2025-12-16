@@ -24,7 +24,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
           
       - name: Install dependencies
         # 改用 npm install，這樣就算沒有 package-lock.json 也能成功安裝依賴
